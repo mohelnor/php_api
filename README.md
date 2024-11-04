@@ -6,4 +6,4 @@
 
 
 ## SCREENSHOTS
-1()[API_MOCK_TEST.png]
+![](API_MOCK_TEST.png)
