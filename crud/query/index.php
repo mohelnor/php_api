@@ -1,22 +1,19 @@
+
+
 <?php
-require '../../db.php';
-require '../../mysql/index.php';
+require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../../mysql/index.php';
 
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    $query = $postdata["query"];
-
-    $result = query_result($query, $conn);
-
-    $res['msg'] = 'Error , IN your syntac , check ur params';
-
+$postdata = get_postdata();
+if (isset($postdata['query']) && !empty($postdata['query'])) {
+    $query = $postdata['query'];
+    $result = query_result($query);
     if ($result) {
-        $res['msg'] = "ok";
-        $res['res'] = $result;
+        send_json(['msg' => 'ok', 'res' => $result]);
+    } else {
+        send_json(['msg' => 'Query failed'], 500);
     }
-
 } else {
-    $res['msg'] = 'Error , Didn\'t receive data ..';
+    send_json(['msg' => 'Missing query'], 400);
 }
-echo json_encode($res);
 mysqli_close($conn);

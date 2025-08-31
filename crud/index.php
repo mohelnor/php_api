@@ -1,12 +1,14 @@
-<?php
-require '../db.php';
-require '../mysql/index.php';
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    $table = $postdata["table"];
-    $row = fetch_all($table, $conn);
 
+<?php
+require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../mysql/index.php';
+
+$postdata = get_postdata();
+if (isset($postdata['table']) && !empty($postdata['table'])) {
+    $table = $postdata['table'];
+    $row = fetch_all($table);
+    send_json($row);
+} else {
+    send_json(['error' => 'No table specified'], 400);
 }
-// echo json_encode($postdata);
-echo json_encode($row);
 mysqli_close($conn);

@@ -1,30 +1,25 @@
+
+
 <?php
-require '../../db.php';
-require '../../mysql/index.php';
+require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../../mysql/index.php';
 
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    $table = $postdata["table"];
-
-    if (isset($postdata["id"])) {
-        $id = $postdata["id"];
-        $result = fetch_by_id($table, $id, $conn);
-    } elseif (isset($postdata["where"])) {
-        $where = $postdata["where"];
-        $result = fetch_where($table, $where, $conn);
+$postdata = get_postdata();
+if (isset($postdata['table']) && !empty($postdata['table'])) {
+    $table = $postdata['table'];
+    if (isset($postdata['id'])) {
+        $id = $postdata['id'];
+        $result = fetch_by_id($table, $id);
+        send_json(['msg' => 'ok', 'res' => $result]);
+    } elseif (isset($postdata['where'])) {
+        $where = $postdata['where'];
+        $result = fetch_where($table, $where);
+        send_json(['msg' => 'ok', 'res' => $result]);
     } else {
-        $result = fetch_all($table, $conn);
+        $result = fetch_all($table);
+        send_json(['msg' => 'ok', 'res' => $result]);
     }
-
-    $res['msg'] = 'Error , IN your syntac , check ur params';
-
-    if ($result) {
-        $res['msg'] = "ok";
-        $res['res'] = $result;
-    }
-    
 } else {
-    $res['msg'] = 'Error , Didn\'t receive data ..';
+    send_json(['msg' => 'Missing table'], 400);
 }
-echo json_encode($res);
 mysqli_close($conn);

@@ -1,34 +1,29 @@
+
+
 <?php
-require '../../db.php';
-require '../../mysql/index.php';
-require '../../functions.php';
+require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../../mysql/index.php';
+require_once __DIR__ . '/../../functions.php';
 
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    $table = $postdata["table"];
-    $table2 = $postdata["table2"];
-    $key = $postdata["key"];
-    $data = is_assoc($postdata["data"]);
-    $result = insertAll($table, $data, $conn);
-
-    $res['msg'] = 'Error , IN your syntac , check ur params';
-
+$postdata = get_postdata();
+if (isset($postdata['table'], $postdata['data'], $postdata['table2'], $postdata['data2'], $postdata['key'])) {
+    $table = $postdata['table'];
+    $table2 = $postdata['table2'];
+    $key = $postdata['key'];
+    $data = $postdata['data'];
+    $data2 = $postdata['data2'];
+    $result = is_assoc($data) ? insertAll($table, $data, $conn) : insert($table, $data);
     if ($result) {
-
-        if (isset($key)) {
-            $last_inserted_id = mysqli_insert_id($conn);
-            $data2 = is_assoc($postdata["data2"]);
-            foreach ($data2 as $k => $v) {
-                #adding $last_inserted_id to $data2
-                $data2[$k][$key] = $last_inserted_id;
-            }
-            $result2 = insertAll($table2, $data2, $conn);
+        $last_inserted_id = mysqli_insert_id($conn);
+        foreach ($data2 as $k => $v) {
+            $data2[$k][$key] = $last_inserted_id;
         }
-
-        $res['msg'] = $result2;
+        $result2 = is_assoc($data2) ? insertAll($table2, $data2, $conn) : insert($table2, $data2);
+        send_json(['msg' => 'ok', 'insert_id' => $last_inserted_id, 'res' => $result2], 201);
+    } else {
+        send_json(['msg' => 'Insert failed'], 500);
     }
 } else {
-    $res['msg'] = 'Error , Didn\'t receive data ..';
+    send_json(['msg' => 'Missing required parameters'], 400);
 }
-echo json_encode($res);
 mysqli_close($conn);

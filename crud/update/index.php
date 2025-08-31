@@ -1,26 +1,26 @@
+
+
 <?php
-require '../../db.php';
-require '../../mysql/index.php';
-require '../../functions.php';
+require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../../mysql/index.php';
+require_once __DIR__ . '/../../functions.php';
 
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    $table = $postdata["table"];
-    $data = $postdata["data"];
-    if (isset($postdata["id"])) {
-        $id = $postdata["id"];
-        $result = update($table, $id, $data, $conn);
+$postdata = get_postdata();
+if (isset($postdata['table'], $postdata['data']) && !empty($postdata['table']) && !empty($postdata['data'])) {
+    $table = $postdata['table'];
+    $data = $postdata['data'];
+    if (isset($postdata['id'])) {
+        $id = $postdata['id'];
+        $result = update($table, $id, $data);
     } else {
-        $result = updateAll($table, $data, $conn);
+        $result = updateAll($table, $data);
     }
-
-    $res['msg'] = 'Error , IN your syntac , check ur params';
-
     if ($result) {
-        $res['msg'] = $result;
+        send_json(['msg' => 'ok', 'res' => $result]);
+    } else {
+        send_json(['msg' => 'Update failed'], 500);
     }
 } else {
-    $res['msg'] = 'Error , Didn\'t receive data ..';
+    send_json(['msg' => 'Missing table or data'], 400);
 }
-echo json_encode($res);
 mysqli_close($conn);

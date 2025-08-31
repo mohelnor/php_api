@@ -4,7 +4,7 @@
 
 // $decryption = password($key,$encrypted_txt, false);
 
-function password(String $key, String $simple_string = null, $encrypt = true)
+function password(String $key, String $simple_string = '', $encrypt = true)
 {
     // Storing the cipher method
     $ciphering = "AES-128-CTR";

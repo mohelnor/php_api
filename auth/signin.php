@@ -1,47 +1,56 @@
+
+
 <?php
-//include Conn
-require '../db.php';
-require '../mysql/index.php';
-require '../functions.php';
+require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../mysql/index.php';
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/token.php';
+session_start();
 
-if (isset($postdata) && !empty($postdata)) {
-    // Extract the data.
-    // $request = json_decode($postdata, true);
-    $request = $postdata;
-    $user = $request["user"];
-    // simple security for passwords
-    $password = $request["password"];
-
-    // query builder
-    $sql = "SELECT * FROM `users` WHERE user = '$user' or password = '$password'";
-    $result = query_result($sql, $conn);
-
-    // error no data
-    $res['msg'] = 100;
-    $res['res'] = $result;
+$postdata = get_postdata();
+$res = [];
+if (isset($postdata['user'], $postdata['password'])) {
+    $user = mysqli_real_escape_string($conn, $postdata['user']);
+    $password = $postdata['password'];
+    $sql = "SELECT * FROM `users` WHERE user = '$user'";
+    $result = query_result($sql);
     if ($result[0] > 0) {
-        $otp = otp();
-
-        $result[1][0]['otp'] = $otp;
-        $res['msg'] = 200;
-        $res['res'] = $result[1][0];
+        $userData = $result[1][0];
+        // Use password_verify if password is hashed, fallback to plain for legacy
+        $valid = false;
+        if (isset($userData['password'])) {
+            if (password_verify($password, $userData['password']) || $userData['password'] === $password) {
+                $valid = true;
+            }
+        }
+        if ($valid) {
+            $otp = otp();
+            $userData['otp'] = $otp;
+            // $_SESSION['user'] = $userData; // Session not needed with JWT
+            // Generate JWT token
+            $payload = [
+                'user' => $userData['user'],
+                'iat' => time(),
+                'exp' => time() + 3600 // 1 hour expiry
+            ];
+            $secret = 'your_secret_key'; // TODO: move to config/env
+            $token = generate_jwt($payload, $secret);
+            send_json(['msg' => 200, 'token' => $token, 'res' => $userData]);
+        } else {
+            send_json(['msg' => 401, 'error' => 'Invalid password'], 401);
+        }
+    } else {
+        send_json(['msg' => 404, 'error' => 'User not found'], 404);
     }
 } else {
-    $res['msg'] = 400;
+    send_json(['msg' => 400, 'error' => 'Missing user or password'], 400);
 }
-
-echo json_encode($res);
 mysqli_close($conn);
 
 
-function mailOtp()
-{
-    // send confirm email
-    // $to = $result[1][0]['email'];
-    // $subject = "My subject";
-    // $txt = "رمز التحقق : - " . $otp;
-    // $headers = "From: webmaster@example.com" . "\r\n" .
-    //     "CC: somebodyelse@example.com";
 
-    // mail($to, $subject, $txt, $headers);
-}
+// example of login with JWT
+// {
+//     "user": "user",
+//     "password": "password"
+// }
